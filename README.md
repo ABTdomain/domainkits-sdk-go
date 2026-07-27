@@ -1,4 +1,4 @@
-# domainkits-go
+# domainkits-sdk-go
 
 Go client for the [DomainKits](https://domainkits.com) REST API.
 
@@ -11,7 +11,7 @@ The REST API is for Premium and Platinum accounts; unauthenticated requests are 
 ## Install
 
 ```bash
-go get github.com/ABTdomain/domainkits-go
+go get github.com/ABTdomain/domainkits-sdk-go
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	domainkits "github.com/ABTdomain/domainkits-go"
+	domainkits "github.com/ABTdomain/domainkits-sdk-go"
 )
 
 func main() {
