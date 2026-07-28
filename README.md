@@ -79,7 +79,17 @@ This runs on a separate, much smaller quota, 10 per day and 100 per month on Pre
 | `Deleted` | Dropped domains (requires `keyword`) |
 | `Market` | Domains listed for sale on marketplaces |
 
-Filters are passed as `Params` and match the REST parameter names. `length` and `age_range` accept a preset band (`5-10`), an exact value (`10`), or a range (`8-12`). `reg_date` accepts a day, month, year, or `from:to` range.
+Filters are passed as `Params` and match the REST parameter names.
+
+`length` and `age_range` accept a preset band (`5-10`), an exact value (`10`), or a range (`8-12`, inclusive of both ends). `age_range` also takes a comma-separated list (`0-5,20+`).
+
+`new` takes `1`, `2` or `3` and restricts results to the last N observed days: on `Expired` the domains that entered the expired pool (expired stage only), on `Deleted` the domains that dropped, on `Market` the listings that first appeared on a marketplace.
+
+`reg_date` on `NRDs` accepts a day (`2026-07-10`), a month (`2026-07`), a year (`2026`), or a `from:to` range where either side may be omitted.
+
+`platform` on `Market` takes `Afternic`, `Atom`, `BuyDomains`, `Dan`, `DDD`, `DN.com`, `Godaddy`, `Hugedomains`, `SawSells`, `Sedo`, `Venture` or `4.cn`, case-insensitive, comma-separated for several.
+
+`position` defaults to `contain` everywhere except `Market`, which defaults to `start`.
 
 ## Other endpoints
 
