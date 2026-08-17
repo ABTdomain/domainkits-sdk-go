@@ -72,7 +72,8 @@ This runs on a separate, much smaller quota, 10 per day and 100 per month on Pre
 
 | Method | What it searches |
 |---|---|
-| `NRDs` | Newly registered domains, last 60 days |
+| `NRDs` | Newly registered domains, last 60 days, from the zone files |
+| `NRDsLive` | Newly registered domains, last 3 days, from Certificate Transparency |
 | `Expired` | Domains in the deletion cycle: expired, redemption, pending delete |
 | `Aged` | Domains with 5 to 20+ years of registration history |
 | `Active` | Currently registered domains |
@@ -90,6 +91,14 @@ Filters are passed as `Params` and match the REST parameter names.
 `platform` on `Market` takes `Afternic`, `Atom`, `BuyDomains`, `Dan`, `DDD`, `DN.com`, `Godaddy`, `Hugedomains`, `SawSells`, `Sedo`, `Venture` or `4.cn`, case-insensitive, comma-separated for several.
 
 `position` defaults to `contain` everywhere except `Market`, which defaults to `start`.
+
+### NRDs and NRDsLive
+
+Two registration feeds, read from different places, so they answer different questions.
+
+`NRDs` reads the zone files and holds 60 days. It is the complete view for the generic TLDs and the one to use for anything that looks back more than a few days.
+
+`NRDsLive` reads Certificate Transparency and holds 3 days. A name reaches it once a certificate is issued, which can be before the zone files carry it, so it surfaces names `NRDs` cannot show yet. It also reaches `.ai` and `.io`, which the zone based feeds do not carry. A row fills `TLD` rather than `TLDCount`, and the endpoint runs on a smaller per-minute quota. `Paginate` and `Export` take the resource as a string, so pass `"nrds-live"` there.
 
 ## Other endpoints
 
@@ -115,7 +124,7 @@ dk.SearchStatus(ctx)
 
 ## Coverage
 
-**gTLDs only** for the domain search endpoints. The index covers generic TLDs: `.com`, `.net`, `.org`, `.info`, `.biz`, `.xyz`, `.online`, `.site`, `.top`, `.club`, `.live`, `.app`, `.dev` and others. Country-code TLDs are not indexed: a query for `.de`, `.io`, `.co` or `.us` returns an empty result set, not an error.
+**gTLDs only** for the zone based domain search endpoints. The index covers generic TLDs: `.com`, `.net`, `.org`, `.info`, `.biz`, `.xyz`, `.online`, `.site`, `.top`, `.club`, `.live`, `.app`, `.dev` and others. Country-code TLDs are not indexed: a query for `.de`, `.co` or `.us` returns an empty result set, not an error. `NRDsLive` is the exception and also carries `.ai` and `.io`.
 
 `Whois`, `DNS`, `Safety`, `IPLookup` and the Certificate Transparency endpoints work on any domain, ccTLDs included.
 

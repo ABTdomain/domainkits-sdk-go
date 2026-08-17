@@ -272,6 +272,10 @@ func (c *Client) NRDs(ctx context.Context, params Params) (*SearchResult, error)
 	return c.search(ctx, "nrds", params)
 }
 
+func (c *Client) NRDsLive(ctx context.Context, params Params) (*SearchResult, error) {
+	return c.search(ctx, "nrds-live", params)
+}
+
 func (c *Client) Expired(ctx context.Context, params Params) (*SearchResult, error) {
 	return c.search(ctx, "expired", params)
 }
