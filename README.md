@@ -1,6 +1,6 @@
 # domainkits-sdk-go
 
-Go client for the [DomainKits](https://domainkits.com) REST API.
+Go client for the [DomainKits](https://domainkits.com) REST API. Tracks API version 0.3.5.
 
 DomainKits is one API with a shared key across every endpoint. This package covers all of them, six domain search types, WHOIS, DNS, reverse nameserver, Certificate Transparency, safety, trends and bulk download, with automatic paging and rate-limit aware retries. No dependencies outside the standard library.
 
@@ -31,10 +31,11 @@ func main() {
 	dk := domainkits.New(os.Getenv("DOMAINKITS_API_KEY"))
 
 	result, err := dk.NRDs(context.Background(), domainkits.Params{
-		"keyword":  "shop",
-		"tld":      "com",
-		"reg_date": "2026-07-10",
-		"no_number": "true",
+		"query":             "shop",
+		"tld":               "com",
+		"create_date_start": "2026-07-10",
+		"create_date_end":   "2026-07-10",
+		"has_number":        "false",
 	})
 	if err != nil {
 		panic(err)
@@ -42,7 +43,7 @@ func main() {
 
 	fmt.Printf("%d matches\n", result.Total)
 	for _, d := range result.Data {
-		fmt.Println(d.Domain, d.RegisteredDate, d.ExpiryDate)
+		fmt.Println(d.Domain, d.Created, d.Expires)
 	}
 }
 ```
@@ -52,7 +53,7 @@ func main() {
 A single request returns at most 500 results. `Paginate` walks the whole result set; return `false` from the callback to stop early:
 
 ```go
-err := dk.Paginate(ctx, "nrds", domainkits.Params{"keyword": "shop", "tld": "com"}, func(d domainkits.Domain) bool {
+err := dk.Paginate(ctx, "nrds", domainkits.Params{"query": "shop", "tld": "com"}, func(d domainkits.Domain) bool {
 	fmt.Println(d.Domain)
 	return true
 })
@@ -66,7 +67,7 @@ err := dk.Paginate(ctx, "nrds", domainkits.Params{"keyword": "shop", "tld": "com
 csv, err := dk.Export(ctx, "expired", domainkits.Params{"tld": "com", "status": "pending_delete"})
 ```
 
-This runs on a separate, much smaller quota, 10 per day and 100 per month on Premium, 3 and 9 during the trial. It is for occasional bulk pulls, not for a scheduled job.
+This runs on a separate, much smaller quota with a monthly cap; call `Usage` for your account's numbers. It is for occasional bulk pulls, not for a scheduled job.
 
 ## Search types
 
@@ -77,20 +78,17 @@ This runs on a separate, much smaller quota, 10 per day and 100 per month on Pre
 | `Expired` | Domains in the deletion cycle: expired, redemption, pending delete |
 | `Aged` | Domains with 5 to 20+ years of registration history |
 | `Active` | Currently registered domains |
-| `Deleted` | Dropped domains (requires `keyword`) |
+| `Deleted` | Dropped domains |
 | `Market` | Domains listed for sale on marketplaces |
 
-Filters are passed as `Params` and match the REST parameter names.
+Filters are passed as `Params` and match the REST parameter names. The vocabulary follows a fixed grammar:
 
-`length` and `age_range` accept a preset band (`5-10`), an exact value (`10`), or a range (`8-12`, inclusive of both ends). `age_range` also takes a comma-separated list (`0-5,20+`).
+- Numeric ranges are `_min`/`_max` pairs (`length_min`/`length_max`, `age_min`/`age_max`), date ranges are `_start`/`_end` pairs (`create_date_start`/`create_date_end`, `found_date_start`/`found_date_end`); either side may be omitted, equal bounds select an exact value.
+- Composition filters are booleans that accept only the literals `true`/`false`: `has_number`, `all_number`, `all_alpha`, `has_hyphen`, `has_sale`.
+- `query` matches a substring of the name portion; `position` (`start`/`end`/`middle`) narrows where and requires `query`. `exclude_query` takes comma-separated negative keywords. `tld` is comma-separated on the search endpoints.
+- Unrecognized parameter names and values return 400, and the error message lists what the endpoint supports, so a failed call tells you how to fix it.
 
-`new` takes `1`, `2` or `3` and restricts results to the last N observed days: on `Expired` the domains that entered the expired pool (expired stage only), on `Deleted` the domains that dropped, on `Market` the listings that first appeared on a marketplace.
-
-`reg_date` on `NRDs` accepts a day (`2026-07-10`), a month (`2026-07`), a year (`2026`), or a `from:to` range where either side may be omitted.
-
-`platform` on `Market` takes `Afternic`, `Atom`, `BuyDomains`, `Dan`, `DDD`, `DN.com`, `Godaddy`, `Hugedomains`, `SawSells`, `Sedo`, `Venture` or `4.cn`, case-insensitive, comma-separated for several.
-
-`position` defaults to `contain` everywhere except `Market`, which defaults to `start`.
+The full parameter and field reference per endpoint is the [OpenAPI spec](https://domainkits.com/dev/openapi.yaml) and the [API docs](https://domainkits.com/dev/api-docs); this README does not duplicate it.
 
 ### NRDs and NRDsLive
 
@@ -98,7 +96,7 @@ Two registration feeds, read from different places, so they answer different que
 
 `NRDs` reads the zone files and holds 60 days. It is the complete view for the generic TLDs and the one to use for anything that looks back more than a few days.
 
-`NRDsLive` reads Certificate Transparency and holds 3 days. A name reaches it once a certificate is issued, which can be before the zone files carry it, so it surfaces names `NRDs` cannot show yet. It also reaches `.ai` and `.io`, which the zone based feeds do not carry. A row fills `TLD` rather than `TLDCount`, and the endpoint runs on a smaller per-minute quota. `Paginate` and `Export` take the resource as a string, so pass `"nrds-live"` there.
+`NRDsLive` holds the last 3 days with live updates, so it surfaces names registered hours ago that `NRDs` cannot show yet, and it also reaches `.ai` and `.io`. Same parameter vocabulary; `tld` takes a single value there, `Created`/`Expires` carry full timestamps rather than dates, rows never fill `TLDCount`, and the endpoint runs on a smaller per-minute quota. `Paginate` and `Export` take the resource as a string, so pass `"nrds-live"` there.
 
 ## Other endpoints
 
@@ -160,7 +158,7 @@ dk.HTTPClient = &http.Client{Timeout: 60 * time.Second}
 
 Call `Usage` for the live picture on your account; every endpoint reports its own per-minute, daily and monthly allowance alongside what you have already spent.
 
-Daily quotas reset at 00:00 UTC, monthly quotas on the 1st. Current limits: [domainkits.com/dev/api-docs](https://domainkits.com/dev/api-docs).
+Daily quotas reset at 00:00 UTC, monthly quotas on the 1st. Current limits per plan: [domainkits.com/pricing](https://domainkits.com/pricing).
 
 ## Resources
 

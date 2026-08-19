@@ -15,7 +15,7 @@ import (
 const (
 	DefaultBaseURL = "https://premium-api.domainkits.com/api/v1"
 	MaxLimit       = 500
-	userAgent      = "domainkits-sdk-go/0.1.0"
+	userAgent      = "domainkits-sdk-go/0.3.5"
 )
 
 type Params map[string]string
@@ -55,15 +55,30 @@ func (e *APIError) RetryAfter() time.Duration {
 	return d
 }
 
+// Domain is the union of the record fields the search endpoints return.
+// Each endpoint fills its own fixed subset; unfilled fields stay zero.
 type Domain struct {
-	Domain         string `json:"domain"`
-	RegisteredDate string `json:"registered_date,omitempty"`
-	ExpiryDate     string `json:"expiry_date,omitempty"`
-	Age            int    `json:"age,omitempty"`
-	Status         string `json:"status,omitempty"`
-	Marketplace    string `json:"marketplace,omitempty"`
-	TLD            string `json:"tld,omitempty"`
-	TLDCount       int    `json:"tld_count,omitempty"`
+	Domain      string   `json:"domain"`
+	TLD         string   `json:"tld,omitempty"`
+	Created     string   `json:"created,omitempty"`
+	Expires     string   `json:"expires,omitempty"`
+	Period      int      `json:"period,omitempty"`
+	Age         int      `json:"age,omitempty"`
+	Length      int      `json:"length,omitempty"`
+	Components  []string `json:"components,omitempty"`
+	ForSale     string   `json:"for_sale,omitempty"`
+	Platform    string   `json:"platform,omitempty"`
+	ListedDays  *int     `json:"listed_days,omitempty"`
+	Status      string   `json:"status,omitempty"`
+	AuctionDate string   `json:"auction_date,omitempty"`
+	FoundDate   string   `json:"found_date,omitempty"`
+	Category    string   `json:"category,omitempty"`
+	Majestic    *int     `json:"majestic,omitempty"`
+	Backlinks   *int     `json:"backlinks,omitempty"`
+	Hold        string   `json:"hold,omitempty"`
+	RegYear     string   `json:"reg_year,omitempty"`
+	ExpYear     string   `json:"exp_year,omitempty"`
+	TLDCount    int      `json:"tld_count,omitempty"`
 }
 
 type SearchResult struct {
@@ -97,6 +112,7 @@ type envelope struct {
 	Error   string          `json:"error"`
 	Data    json.RawMessage `json:"data"`
 	Total   *int            `json:"total"`
+	NSTotal *int            `json:"ns_total"`
 }
 
 func readRateLimit(h http.Header) RateLimit {
@@ -377,26 +393,45 @@ func (c *Client) Typosquat(ctx context.Context, domain string, params Params) (*
 	return c.list(ctx, "/typosquat", merged)
 }
 
-func (c *Client) NSReverse(ctx context.Context, ns string, params Params) ([]string, int, error) {
+// NSDomain is one row of the reverse nameserver lookup.
+type NSDomain struct {
+	Domain string `json:"domain"`
+	TLD    string `json:"tld"`
+	Length int    `json:"length"`
+}
+
+// NSReverseResult carries the rows plus the two counts the endpoint reports:
+// Total is the match count after filters, NSTotal the domains on the
+// nameserver before filters.
+type NSReverseResult struct {
+	Data    []NSDomain
+	Total   int
+	NSTotal int
+}
+
+func (c *Client) NSReverse(ctx context.Context, ns string, params Params) (*NSReverseResult, error) {
 	merged := Params{"ns": ns}
 	for k, v := range params {
 		merged[k] = v
 	}
 	env, err := c.request(ctx, "/ns-reverse", merged)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-	var data []string
+	result := &NSReverseResult{}
 	if len(env.Data) > 0 && string(env.Data) != "null" {
-		if err := json.Unmarshal(env.Data, &data); err != nil {
-			return nil, 0, err
+		if err := json.Unmarshal(env.Data, &result.Data); err != nil {
+			return nil, err
 		}
 	}
-	total := len(data)
+	result.Total = len(result.Data)
 	if env.Total != nil {
-		total = *env.Total
+		result.Total = *env.Total
 	}
-	return data, total, nil
+	if env.NSTotal != nil {
+		result.NSTotal = *env.NSTotal
+	}
+	return result, nil
 }
 
 func (c *Client) MonitorChanges(ctx context.Context, params Params) (*ListResult, error) {
