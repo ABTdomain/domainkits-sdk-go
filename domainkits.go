@@ -55,8 +55,6 @@ func (e *APIError) RetryAfter() time.Duration {
 	return d
 }
 
-// Domain is the union of the record fields the search endpoints return.
-// Each endpoint fills its own fixed subset; unfilled fields stay zero.
 type Domain struct {
 	Domain      string   `json:"domain"`
 	TLD         string   `json:"tld,omitempty"`
@@ -393,16 +391,12 @@ func (c *Client) Typosquat(ctx context.Context, domain string, params Params) (*
 	return c.list(ctx, "/typosquat", merged)
 }
 
-// NSDomain is one row of the reverse nameserver lookup.
 type NSDomain struct {
 	Domain string `json:"domain"`
 	TLD    string `json:"tld"`
 	Length int    `json:"length"`
 }
 
-// NSReverseResult carries the rows plus the two counts the endpoint reports:
-// Total is the match count after filters, NSTotal the domains on the
-// nameserver before filters.
 type NSReverseResult struct {
 	Data    []NSDomain
 	Total   int
