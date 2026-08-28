@@ -86,6 +86,8 @@ Lookups and reports:
 | `SearchStatus` | `/search/status` |
 | `Health` | `/health` |
 
+`IPLookup` returns `*IPInfo`, `Registrar` returns `*RegistrarResult` and takes `Params` for paging, `StatusGuide` returns `[]EPPStatus`, `NSReverse` returns `*NSReverseResult`. The rest return `*ListResult` or `map[string]any`.
+
 The [API reference](https://domainkits.com/dev/api-docs) is the authority on every filter, field and limit.
 
 **No PII.** Responses contain no registrant personal data.

@@ -15,7 +15,7 @@ import (
 const (
 	DefaultBaseURL = "https://premium-api.domainkits.com/api/v1"
 	MaxLimit       = 500
-	userAgent      = "domainkits-sdk-go/0.3.7"
+	userAgent      = "domainkits-sdk-go/0.3.9"
 )
 
 type Params map[string]string
@@ -77,6 +77,7 @@ type Domain struct {
 	RegYear     string   `json:"reg_year,omitempty"`
 	ExpYear     string   `json:"exp_year,omitempty"`
 	TLDCount    int      `json:"tld_count,omitempty"`
+	Live        *bool    `json:"live,omitempty"`
 }
 
 type SearchResult struct {
@@ -111,6 +112,8 @@ type envelope struct {
 	Data    json.RawMessage `json:"data"`
 	Total   *int            `json:"total"`
 	NSTotal *int            `json:"ns_total"`
+	Limit   *int            `json:"limit"`
+	Offset  *int            `json:"offset"`
 }
 
 func readRateLimit(h http.Header) RateLimit {
@@ -363,16 +366,116 @@ func (c *Client) Safety(ctx context.Context, domain string) (map[string]any, err
 	return c.Object(ctx, "/safety", Params{"domain": domain})
 }
 
-func (c *Client) IPLookup(ctx context.Context, query string) (map[string]any, error) {
-	return c.Object(ctx, "/ip-lookup", Params{"query": query})
+type IPInfo struct {
+	IP             string   `json:"ip"`
+	Type           string   `json:"type"`
+	ASN            *int     `json:"asn"`
+	ASOrganization string   `json:"as_organization"`
+	Continent      string   `json:"continent"`
+	ContinentCode  string   `json:"continent_code"`
+	Country        string   `json:"country"`
+	CountryCode    string   `json:"country_code"`
+	IsEU           bool     `json:"is_eu"`
+	Region         string   `json:"region"`
+	RegionCode     string   `json:"region_code"`
+	City           string   `json:"city"`
+	Postal         string   `json:"postal"`
+	Latitude       *float64 `json:"latitude"`
+	Longitude      *float64 `json:"longitude"`
+	Timezone       string   `json:"timezone"`
 }
 
-func (c *Client) Registrar(ctx context.Context, query string) (map[string]any, error) {
-	return c.Object(ctx, "/registrar", Params{"query": query})
+type RegistrarRecord struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Status      string `json:"status"`
+	RdapURL     string `json:"rdap_url"`
+	IsDropCatch bool   `json:"is_drop_catch"`
+	ParentID    string `json:"parent_id"`
+	ParentName  string `json:"parent_name"`
+	Country     string `json:"country"`
+	Contact     string `json:"contact"`
+	Website     string `json:"website"`
+	Address     string `json:"address"`
+	Phone       string `json:"phone"`
+	Email       string `json:"email"`
+	RdapFetched bool   `json:"rdap_fetched"`
 }
 
-func (c *Client) StatusGuide(ctx context.Context, query string) (map[string]any, error) {
-	return c.Object(ctx, "/status-guide", Params{"query": query})
+type RegistrarResult struct {
+	Data   []RegistrarRecord
+	Total  int
+	Limit  int
+	Offset int
+}
+
+type EPPStatus struct {
+	Status          string   `json:"status"`
+	Aliases         []string `json:"aliases"`
+	Category        string   `json:"category"`
+	Description     string   `json:"description"`
+	Action          string   `json:"action"`
+	Severity        string   `json:"severity"`
+	PossibleReasons string   `json:"possible_reasons"`
+}
+
+func (c *Client) IPLookup(ctx context.Context, query string) (*IPInfo, error) {
+	env, err := c.request(ctx, "/ip-lookup", Params{"query": query})
+	if err != nil {
+		return nil, err
+	}
+	var rows []IPInfo
+	if len(env.Data) > 0 && string(env.Data) != "null" {
+		if err := json.Unmarshal(env.Data, &rows); err != nil {
+			return nil, err
+		}
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	return &rows[0], nil
+}
+
+func (c *Client) Registrar(ctx context.Context, query string, params Params) (*RegistrarResult, error) {
+	merged := Params{"query": query}
+	for k, v := range params {
+		merged[k] = v
+	}
+	env, err := c.request(ctx, "/registrar", merged)
+	if err != nil {
+		return nil, err
+	}
+	result := &RegistrarResult{}
+	if len(env.Data) > 0 && string(env.Data) != "null" {
+		if err := json.Unmarshal(env.Data, &result.Data); err != nil {
+			return nil, err
+		}
+	}
+	result.Total = len(result.Data)
+	if env.Total != nil {
+		result.Total = *env.Total
+	}
+	if env.Limit != nil {
+		result.Limit = *env.Limit
+	}
+	if env.Offset != nil {
+		result.Offset = *env.Offset
+	}
+	return result, nil
+}
+
+func (c *Client) StatusGuide(ctx context.Context, query string) ([]EPPStatus, error) {
+	env, err := c.request(ctx, "/status-guide", Params{"query": query})
+	if err != nil {
+		return nil, err
+	}
+	var rows []EPPStatus
+	if len(env.Data) > 0 && string(env.Data) != "null" {
+		if err := json.Unmarshal(env.Data, &rows); err != nil {
+			return nil, err
+		}
+	}
+	return rows, nil
 }
 
 func (c *Client) TLDCheck(ctx context.Context, prefix string, params Params) (map[string]any, error) {
