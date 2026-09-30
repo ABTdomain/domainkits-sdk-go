@@ -68,7 +68,6 @@ Lookups and reports:
 |---|---|
 | `Whois` | `/whois` |
 | `DNS` | `/dns` |
-| `Safety` | `/safety` |
 | `IPLookup` | `/ip-lookup` |
 | `Registrar` | `/registrar` |
 | `StatusGuide` | `/status-guide` |

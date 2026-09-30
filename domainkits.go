@@ -362,10 +362,6 @@ func (c *Client) DNS(ctx context.Context, domain string) (map[string]any, error)
 	return c.Object(ctx, "/dns", Params{"domain": domain})
 }
 
-func (c *Client) Safety(ctx context.Context, domain string) (map[string]any, error) {
-	return c.Object(ctx, "/safety", Params{"domain": domain})
-}
-
 type IPInfo struct {
 	IP             string   `json:"ip"`
 	Type           string   `json:"type"`
