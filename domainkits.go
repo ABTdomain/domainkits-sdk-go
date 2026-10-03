@@ -15,7 +15,7 @@ import (
 const (
 	DefaultBaseURL = "https://premium-api.domainkits.com/api/v1"
 	MaxLimit       = 500
-	userAgent      = "domainkits-sdk-go/0.3.10"
+	userAgent      = "domainkits-sdk-go/0.4.1"
 )
 
 type Params map[string]string
