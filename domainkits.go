@@ -114,6 +114,7 @@ type envelope struct {
 	NSTotal *int            `json:"ns_total"`
 	Limit   *int            `json:"limit"`
 	Offset  *int            `json:"offset"`
+	Window  json.RawMessage `json:"window"`
 }
 
 func readRateLimit(h http.Header) RateLimit {
@@ -543,12 +544,48 @@ func (c *Client) CTCerts(ctx context.Context, params Params) (*ListResult, error
 	return c.list(ctx, "/ct/certs", params)
 }
 
-func (c *Client) CTSearch(ctx context.Context, keyword string, params Params) (*ListResult, error) {
-	merged := Params{"keyword": keyword}
+type Hostname struct {
+	Hostname  string `json:"hostname"`
+	RegDomain string `json:"reg_domain"`
+	IssueTime string `json:"issuretime"`
+}
+
+type HostnameWindow struct {
+	Since string `json:"since"`
+	Until string `json:"until"`
+}
+
+type HostnameResult struct {
+	Data   []Hostname
+	Total  int
+	Window HostnameWindow
+}
+
+func (c *Client) HostnameSearch(ctx context.Context, q string, params Params) (*HostnameResult, error) {
+	merged := Params{"q": q}
 	for k, v := range params {
 		merged[k] = v
 	}
-	return c.list(ctx, "/ct/search", merged)
+	env, err := c.request(ctx, "/search/hostname", merged)
+	if err != nil {
+		return nil, err
+	}
+	result := &HostnameResult{}
+	if len(env.Data) > 0 && string(env.Data) != "null" {
+		if err := json.Unmarshal(env.Data, &result.Data); err != nil {
+			return nil, err
+		}
+	}
+	result.Total = len(result.Data)
+	if env.Total != nil {
+		result.Total = *env.Total
+	}
+	if len(env.Window) > 0 && string(env.Window) != "null" {
+		if err := json.Unmarshal(env.Window, &result.Window); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (c *Client) TLDTrends(ctx context.Context, trendType string, params Params) ([]map[string]any, error) {

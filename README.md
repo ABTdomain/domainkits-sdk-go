@@ -75,9 +75,9 @@ Lookups and reports:
 | `Typosquat` | `/typosquat` |
 | `NSReverse` | `/ns-reverse` |
 | `MonitorChanges` | `/monitor/changes` |
+| `HostnameSearch` | `/search/hostname` |
 | `CTSubdomains` | `/ct/subdomains` |
 | `CTCerts` | `/ct/certs` |
-| `CTSearch` | `/ct/search` |
 | `TLDTrends` | `/trends/tlds/*` |
 | `KeywordTrends` | `/trends/keywords/*` |
 | `NRDsDownload` | `/nrds/download` |
