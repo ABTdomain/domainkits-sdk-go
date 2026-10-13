@@ -56,28 +56,27 @@ func (e *APIError) RetryAfter() time.Duration {
 }
 
 type Domain struct {
-	Domain      string   `json:"domain"`
-	TLD         string   `json:"tld,omitempty"`
-	Created     string   `json:"created,omitempty"`
-	Expires     string   `json:"expires,omitempty"`
-	Period      int      `json:"period,omitempty"`
-	Age         int      `json:"age,omitempty"`
-	Length      int      `json:"length,omitempty"`
-	Components  []string `json:"components,omitempty"`
-	ForSale     string   `json:"for_sale,omitempty"`
-	Platform    string   `json:"platform,omitempty"`
-	ListedDays  *int     `json:"listed_days,omitempty"`
-	Status      string   `json:"status,omitempty"`
-	AuctionDate string   `json:"auction_date,omitempty"`
-	FoundDate   string   `json:"found_date,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Majestic    *int     `json:"majestic,omitempty"`
-	Backlinks   *int     `json:"backlinks,omitempty"`
-	Hold        string   `json:"hold,omitempty"`
-	RegYear     string   `json:"reg_year,omitempty"`
-	ExpYear     string   `json:"exp_year,omitempty"`
-	TLDCount    int      `json:"tld_count,omitempty"`
-	Live        *bool    `json:"live,omitempty"`
+	Domain      string `json:"domain"`
+	TLD         string `json:"tld,omitempty"`
+	Created     string `json:"created,omitempty"`
+	Expires     string `json:"expires,omitempty"`
+	Period      int    `json:"period,omitempty"`
+	Age         int    `json:"age,omitempty"`
+	Length      int    `json:"length,omitempty"`
+	ForSale     string `json:"for_sale,omitempty"`
+	Platform    string `json:"platform,omitempty"`
+	ListedDays  *int   `json:"listed_days,omitempty"`
+	Status      string `json:"status,omitempty"`
+	AuctionDate string `json:"auction_date,omitempty"`
+	FoundDate   string `json:"found_date,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Majestic    *int   `json:"majestic,omitempty"`
+	Backlinks   *int   `json:"backlinks,omitempty"`
+	Hold        string `json:"hold,omitempty"`
+	RegYear     string `json:"reg_year,omitempty"`
+	ExpYear     string `json:"exp_year,omitempty"`
+	TLDCount    int    `json:"tld_count,omitempty"`
+	Live        *bool  `json:"live,omitempty"`
 }
 
 type SearchResult struct {
@@ -288,10 +287,6 @@ func (c *Client) list(ctx context.Context, path string, params Params) (*ListRes
 
 func (c *Client) NRDs(ctx context.Context, params Params) (*SearchResult, error) {
 	return c.search(ctx, "nrds", params)
-}
-
-func (c *Client) NRDsLive(ctx context.Context, params Params) (*SearchResult, error) {
-	return c.search(ctx, "nrds-live", params)
 }
 
 func (c *Client) Expired(ctx context.Context, params Params) (*SearchResult, error) {

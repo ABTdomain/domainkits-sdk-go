@@ -56,7 +56,6 @@ Search, each returning `*SearchResult`; `Paginate` and `Export` take the resourc
 |---|---|
 | `Expired` | `/search/expired` |
 | `NRDs` | `/search/nrds` |
-| `NRDsLive` | `/search/nrds-live` |
 | `Aged` | `/search/aged` |
 | `Active` | `/search/active` |
 | `Deleted` | `/search/deleted` |
