@@ -6,6 +6,11 @@ This is the official Go SDK for the DomainKits API, published and maintained by 
 
 Every parameter, response field and current limit is documented in the [API reference](https://domainkits.com/dev/api-docs) and the [OpenAPI spec](https://domainkits.com/dev/openapi.yaml). This README only lists what the SDK covers. No dependencies outside the standard library.
 
+<p align="center">
+<a href="https://www.youtube.com/watch?v=8bXfKV5-eGw"><img src="https://img.youtube.com/vi/8bXfKV5-eGw/maxresdefault.jpg" alt="Video: How to get a newly registered domains feed with the DomainKits API" width="640"></a><br>
+<a href="https://www.youtube.com/watch?v=8bXfKV5-eGw">▶ Watch on YouTube: How to Get a Newly Registered Domains Feed with an API</a>
+</p>
+
 ## Requirements
 
 The REST API is for Premium and Platinum accounts; unauthenticated requests are rejected with 401. Keys start with `dk_` and come from [domainkits.com](https://domainkits.com/pricing).
